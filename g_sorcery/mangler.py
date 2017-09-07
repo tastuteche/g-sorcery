@@ -15,6 +15,10 @@ import os
 
 from .logger import Logger
 
+import portage
+eprefix = portage.settings['EPREFIX']
+
+
 class PackageManager(object):
     """
     Base class for package manager abstraction
@@ -22,7 +26,7 @@ class PackageManager(object):
 
     executable = ""
     logger = Logger()
-    
+
     def __init__(self):
         pass
 
@@ -43,12 +47,14 @@ class Portage(PackageManager):
     """
     Portage package manager abstraction.
     """
+
     def __init__(self):
         super(Portage, self).__init__()
-        self.executable = "/usr/bin/emerge"
+        self.executable = eprefix + "/usr/bin/emerge"
 
     def install(self, pkgname, *args):
         return self.run_command("-va", pkgname, *args)
 
-#list of supported package managers.
-package_managers = {'portage' : Portage}
+
+# list of supported package managers.
+package_managers = {'portage': Portage}

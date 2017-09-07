@@ -24,6 +24,9 @@ from .logger import Logger
 from .mangler import package_managers
 from .package_db import PackageDB
 
+eprefix = portage.settings['EPREFIX']
+
+
 class Backend(object):
     """
     Backend for a repository.
@@ -48,7 +51,8 @@ class Backend(object):
                  package_db_class=PackageDB, sync_db=False):
         self.sorcery_dir = '.g-sorcery'
         self.sync_db = sync_db
-        self.package_db_generator = package_db_generator_class(package_db_class)
+        self.package_db_generator = package_db_generator_class(
+            package_db_class)
         self.ebuild_g_with_digest_class = ebuild_g_with_digest_class
         self.ebuild_g_without_digest_class = ebuild_g_without_digest_class
         self.eclass_g_class = eclass_g_class
@@ -119,10 +123,10 @@ class Backend(object):
         """
         overlay = self._get_overlay(args, config, global_config)
         backend_path = os.path.join(overlay,
-                            self.sorcery_dir, config["package"])
+                                    self.sorcery_dir, config["package"])
         repository = args.repository
         pkg_db = self.package_db_generator(backend_path,
-                                    repository, generate=False)
+                                           repository, generate=False)
         return pkg_db
 
     def sync(self, args, config, global_config):
@@ -139,7 +143,7 @@ class Backend(object):
         """
         overlay = self._get_overlay(args, config, global_config)
         backend_path = os.path.join(overlay,
-                            self.sorcery_dir, config["package"])
+                                    self.sorcery_dir, config["package"])
         repository = args.repository
         repository_config = {}
 
@@ -151,7 +155,7 @@ class Backend(object):
         if repository:
             if not "repositories" in config:
                 self.logger.error("repository " + repository +
-                    " specified, but there is no repositories entry in config")
+                                  " specified, but there is no repositories entry in config")
                 return -1
             repositories = config["repositories"]
             if not repository in repositories:
@@ -168,11 +172,12 @@ class Backend(object):
             sync_method = "tgz"
         if self.sync_db:
             pkg_db = self.package_db_generator(backend_path, repository,
-                            common_config, repository_config, generate=False)
-            pkg_db.sync(repository_config["db_uri"], repository_config=repository_config, sync_method=sync_method)
+                                               common_config, repository_config, generate=False)
+            pkg_db.sync(
+                repository_config["db_uri"], repository_config=repository_config, sync_method=sync_method)
         else:
             pkg_db = self.package_db_generator(backend_path,
-                            repository, common_config, repository_config)
+                                               repository, common_config, repository_config)
         return 0
 
     def list(self, args, config, global_config):
@@ -199,7 +204,7 @@ class Backend(object):
                     max_ver = pkg_db.get_max_version(category, pkg)
                     versions = pkg_db.list_package_versions(category, pkg)
                     desc = pkg_db.get_package_description(Package(category,
-                                                            pkg, max_ver))
+                                                                  pkg, max_ver))
                     print('  ' + pkg + ': ' + desc['description'])
                     print('    Available versions: ' + ' '.join(versions))
                     print('\n')
@@ -263,15 +268,14 @@ class Backend(object):
             name = package.name
             version = package.version
             self.logger.info("    generating " +
-                        category + '/' + name + '-' + version)
+                             category + '/' + name + '-' + version)
             path = os.path.join(overlay, category, name)
             if not os.path.exists(path):
                 os.makedirs(path)
             source = ebuild_g.generate(package)
             with open(os.path.join(path,
-                        name + '-' + version + '.ebuild'), 'w') as f:
+                                   name + '-' + version + '.ebuild'), 'w') as f:
                 f.write('\n'.join(source))
-
 
     def generate_metadatas(self, package_db, overlay, packages):
         """
@@ -311,7 +315,6 @@ class Backend(object):
             with open(os.path.join(path, eclass + '.eclass'), 'w') as f:
                 f.write('\n'.join(source))
 
-
     def get_dependencies(self, package_db, pkgname):
         """
         Get dependencies for a given package.
@@ -346,13 +349,13 @@ class Backend(object):
 
             if not len(categories):
                 error = 'no package with name ' \
-                                  + pkgname + ' found'
+                    + pkgname + ' found'
                 self.logger.error(error + '\n')
                 raise DependencyError(error)
 
             if len(categories) > 1:
                 self.logger.error('ambiguous packagename: ' + pkgname + '\n')
-                self.logger.error('please select one of' \
+                self.logger.error('please select one of'
                                   + 'the following packages:\n')
                 for cat in categories:
                     self.logger.error('    ' + cat + '/' + pkgname + '\n')
@@ -363,7 +366,7 @@ class Backend(object):
         dependencies = set()
         for version in versions:
             dependencies |= self.solve_dependencies(package_db,
-                                    Package(category, name, version))[0]
+                                                    Package(category, name, version))[0]
         return dependencies
 
     def solve_dependencies(self, package_db, package,
@@ -391,7 +394,7 @@ class Backend(object):
             return solved_deps
         if package in unsolved_deps:
             error = 'circular dependency for ' + package.category + '/' + \
-              package.name + '-' + package.version
+                package.name + '-' + package.version
             raise DependencyError(error)
         unsolved_deps.add(package)
         found = True
@@ -412,11 +415,12 @@ class Backend(object):
         for pkg in dependencies:
             try:
                 versions = package_db.list_package_versions(pkg.category,
-                                                        pkg.package)
+                                                            pkg.package)
                 for version in versions:
                     solved_deps, unsolved_deps = self.solve_dependencies(package_db,
-                                    Package(pkg.category, pkg.package, version),
-                                    solved_deps, unsolved_deps)
+                                                                         Package(
+                                                                             pkg.category, pkg.package, version),
+                                                                         solved_deps, unsolved_deps)
             except InvalidKeyError:
                 # ignore non existing packages
                 continue
@@ -425,7 +429,6 @@ class Backend(object):
         unsolved_deps.remove(package)
 
         return (solved_deps, unsolved_deps)
-
 
     def digest(self, overlay):
         """
@@ -467,7 +470,8 @@ class Backend(object):
             Exit status.
         """
         try:
-            packages = global_config.get(config["backend"], args.repository + "_packages").split(" ")
+            packages = global_config.get(
+                config["backend"], args.repository + "_packages").split(" ")
         except Exception:
             packages = []
 
@@ -478,7 +482,7 @@ class Backend(object):
 
         os.system('rm -rf ' + overlay + '/*')
         os.makedirs(os.path.join(overlay, 'profiles'))
-        os.system("echo " + os.path.basename(overlay) + '>' + \
+        os.system("echo " + os.path.basename(overlay) + '>' +
                   os.path.join(overlay, 'profiles', 'repo_name'))
 
         os.makedirs(os.path.join(overlay, 'metadata'))
@@ -487,11 +491,13 @@ class Backend(object):
         else:
             masters = elist(config["repositories"][args.repository]["masters"])
 
-        overlays = FileJSON("/var/lib/g-sorcery", "overlays.json", [])
+        overlays = FileJSON(eprefix + "/var/lib/g-sorcery",
+                            "overlays.json", [])
         overlays_old_info = overlays.read()
         overlays_info = {}
         masters_overlays = elist()
-        portage_overlays = [repo.location for repo in portage.settings.repositories]
+        portage_overlays = [
+            repo.location for repo in portage.settings.repositories]
 
         for repo, info in overlays_old_info.items():
             if info["path"] in portage_overlays:
@@ -502,14 +508,16 @@ class Backend(object):
         for repo in masters:
             if repo != "gentoo":
                 if not repo in overlays_info:
-                    self.logger.error("Master repository " + repo + " not available on your system")
+                    self.logger.error("Master repository " +
+                                      repo + " not available on your system")
                     self.logger.error("Please, add it with layman -a " + repo)
                     return -1
                 masters_overlays.append(overlays_info[repo]["repo-name"])
 
         masters_overlays.append("gentoo")
 
-        overlays_info[args.repository] = {"repo-name": os.path.basename(overlay), "path": overlay}
+        overlays_info[args.repository] = {
+            "repo-name": os.path.basename(overlay), "path": overlay}
         with open(os.path.join(overlay, 'metadata', 'layout.conf'), 'w') as f:
             f.write("repo-name = %s\n" % os.path.basename(overlay))
             f.write("masters = %s\n" % masters_overlays)
@@ -545,7 +553,7 @@ class Backend(object):
                 os.makedirs(path)
             source = ebuild_g.generate(package, ebuild_data)
             with open(os.path.join(path,
-                        name + '-' + version + '.ebuild'),
+                                   name + '-' + version + '.ebuild'),
                       'wb') as f:
                 f.write('\n'.join(source).encode('utf-8'))
 
@@ -595,10 +603,10 @@ class Backend(object):
         except configparser.NoOptionError:
             package_manager_class = package_managers["portage"]
             package_manager = None
-        if  package_manager:
+        if package_manager:
             if not package_manager in package_managers:
-                self.logger.error('not supported package manager: ' \
-                                + package_manager + '\n')
+                self.logger.error('not supported package manager: '
+                                  + package_manager + '\n')
                 return -1
             package_manager_class = package_managers[package_manager]
         package_manager = package_manager_class()
@@ -640,13 +648,13 @@ class Backend(object):
                 if len(brepos) == 1:
                     args.repository = brepos[0]
                 else:
-                    self.logger.error("No repository specified," \
+                    self.logger.error("No repository specified,"
                                       + " possible values:")
                     for repo in brepos:
                         print("    " + repo)
                     return -1
             else:
-                self.logger.error("No repository for backend " \
+                self.logger.error("No repository for backend "
                                   + back + " in overlay " + args.overlay)
                 return -1
         return args.func(args, config, global_config)

@@ -28,14 +28,15 @@ for mod in SELECTABLE:
     if mod in USE:
         optional_modules.append('g_sorcery.%s' % SELECTABLE[mod])
 
-setup(name          = 'g-sorcery',
-      version       = '0.2.1',
-      description   = 'framework for automated ebuild generators',
-      author        = 'Jauhien Piatlicki',
-      author_email  = 'jauhien@gentoo.org',
-      packages      = ['g_sorcery', 'gs_db_tool'] + optional_modules,
-      package_data  = {'g_sorcery': ['data/*']},
-      scripts       = ['bin/g-sorcery', 'bin/gs-db-tool'],
-      data_files    = [('/etc/g-sorcery/', ['g-sorcery.cfg'])],
-      license       = 'GPL-2',
+setup(name='g-sorcery',
+      version='0.2.1',
+      description='framework for automated ebuild generators',
+      author='Jauhien Piatlicki',
+      author_email='jauhien@gentoo.org',
+      packages=['g_sorcery', 'gs_db_tool'] + optional_modules,
+      package_data={'g_sorcery': ['data/*']},
+      scripts=['bin/g-sorcery', 'bin/gs-db-tool'],
+      data_files=[
+          ('@GENTOO_PORTAGE_EPREFIX@/etc/g-sorcery/', ['g-sorcery.cfg'])],
+      license='GPL-2',
       )

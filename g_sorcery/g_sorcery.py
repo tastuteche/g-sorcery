@@ -21,6 +21,10 @@ from .fileutils import FileJSON
 from .exceptions import FileJSONError
 from .logger import Logger
 
+import portage
+eprefix = portage.settings['EPREFIX']
+
+
 def main():
     logger = Logger()
     if len(sys.argv) < 2:
@@ -29,7 +33,7 @@ def main():
     name = sys.argv[1]
     cfg = name + '.json'
     cfg_path = None
-    for path in '.', '~', '/etc/g-sorcery':
+    for path in '.', '~', eprefix + '/etc/g-sorcery':
         current = os.path.join(path, cfg)
         if (os.path.isfile(current)):
             cfg_path = path
@@ -41,7 +45,7 @@ def main():
     try:
         config = cfg_f.read()
     except FileJSONError as e:
-        logger.error('error loading config file for ' \
+        logger.error('error loading config file for '
                      + name + ': ' + str(e) + '\n')
         return -1
     backend = get_backend(config['package'])
@@ -51,7 +55,7 @@ def main():
         return -1
 
     config_file = None
-    for path in '.', '~', '/etc/g-sorcery':
+    for path in '.', '~', eprefix + '/etc/g-sorcery':
         config_file = os.path.join(path, "g-sorcery.cfg")
         if (os.path.isfile(config_file)):
             break
